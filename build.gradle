@@ -1,0 +1,39 @@
+version = '0.0.1-SNAPSHOT'
+group = "com.xebialabs.overthere"
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'java'
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+configurations {
+  compile {
+    transitive = false
+  }
+}
+
+dependencies {
+  compile 'com.xebialabs.cloud:overcast:1.1.1'
+  compile 'com.xebialabs.overthere:overthere:2.0.0'
+  compile 'com.xebialabs.overthere:nio-overthere:1.0.0-SNAPSHOT'
+  compile 'org.apache.httpcomponents:httpclient:4.2.1'
+  compile 'org.apache.httpcomponents:httpcore:4.2.1'
+  runtime 'com.jcraft:jzlib:1.0.7'
+  runtime 'org.bouncycastle:bcprov-jdk16:1.45'
+
+  testCompile 'com.google.guava:guava:13.0'
+  testCompile 'org.hamcrest:hamcrest-core:1.2.1'
+  testCompile 'org.testng:testng:6.5.1'
+  testRuntime 'ch.qos.logback:logback-classic:1.0.6'
+}
+
+test {
+  useTestNG()
+}
