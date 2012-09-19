@@ -1,26 +1,28 @@
 package com.xebialabs.j12012;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
+import java.util.concurrent.CountDownLatch;
+import javax.swing.*;
 import org.testng.annotations.*;
 
 import com.google.common.io.Closeables;
 
 import com.xebialabs.overthere.OverthereProcess;
-import com.xebialabs.overthere.nio.process.Processes;
 
-import static com.xebialabs.j12012.ConnectionTester.isReachable;
+import static com.xebialabs.j12012.Commons.isReachable;
 import static com.xebialabs.overthere.nio.process.Processes.execute;
 import static com.xebialabs.overthere.nio.process.Processes.startProcess;
 import static java.nio.file.Files.copy;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isReadable;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class ScenarioTest {
-    public static final String GLASSFISH_ZIP = "glassfish-3.1.2.2-web.zip";
+    public static final String GLASSFISH_ZIP = "glassfish-3.1.2.2.zip";
+    public static final String PETCLINIC_EAR = "PetClinic-1.0.ear";
     public static final String GLASSFISH_DIR = "glassfish3";
 
     private FileSystem localFileSystem;
@@ -62,15 +64,18 @@ public abstract class ScenarioTest {
     @Test(dependsOnMethods = "cleanup")
     public void shouldCopyToRemote() throws IOException, InterruptedException {
         Path localPath = localFileSystem.getPath(GLASSFISH_ZIP);
+        Path petclinicPath = localFileSystem.getPath(PETCLINIC_EAR);
         Path targetPath = targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP);
+        Path petclinicDeployPath = glassfishPath.resolve("glassfish/domains/domain1/autodeploy").resolve(PETCLINIC_EAR);
 
         assertThat("Glassfish should not exist before copy", !Files.exists(targetPath));
         copy(localPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         assertThat("Glassfish should exist after copy", Files.exists(targetPath));
 
         assertThat("Glassfish dir should not exist before unzip", !Files.exists(glassfishPath));
-        execute(targetFileSystem.getPath(unzipPathName), targetPath.toString(), "-d", glassfishPath.getParent().toString());
+        execute(unzipPath, targetPath.toString(), "-d", glassfishPath.getParent().toString());
         assertThat("Glassfish dir should exist after unzip", Files.exists(glassfishPath));
+
 
         assertThat("GlassFish should not be started yet", !isReachable(getIp(), 4848));
         OverthereProcess overthereProcess = startProcess(glassfishPath.resolve("glassfish/bin/startserv"));
@@ -83,9 +88,17 @@ public abstract class ScenarioTest {
             }
         }
         // Give GlassFish admin console a bit of time to start.
-        Thread.sleep(5000);
-        assertThat("GlassFish should be started", isReachable(getIp(), 4848));
-        overthereProcess.destroy();
+        while (!isReachable(getIp(), 4848)) {
+            Thread.sleep(1000);
+        }
+
+        copy(petclinicPath, petclinicDeployPath, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Commons.waitUntilButtonClicked();
+        } finally {
+            overthereProcess.destroy();
+        }
+
     }
 
 }
