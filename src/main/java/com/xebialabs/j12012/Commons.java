@@ -42,4 +42,10 @@ public class Commons {
         jFrame.setVisible(true);
         countDownLatch.await();
     }
+
+    public static void waitUntilReachable(final String ip, final int i) throws InterruptedException, IOException {
+        while (!isReachable(ip, i)) {
+            Thread.sleep(1000);
+        }
+}
 }
