@@ -10,14 +10,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class DeleteDirVisitor extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-        Files.delete(file);
+        Files.deleteIfExists(file);
         return FileVisitResult.CONTINUE;
     }
 
     @Override
     public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
         if (exc == null) {
-            Files.delete(dir);
+            Files.deleteIfExists(dir);
             return FileVisitResult.CONTINUE;
         }
         throw exc;

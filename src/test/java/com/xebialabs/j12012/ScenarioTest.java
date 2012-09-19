@@ -1,15 +1,19 @@
 package com.xebialabs.j12012;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.*;
 import org.testng.annotations.*;
 
 import com.google.common.io.Closeables;
 
+import com.xebialabs.overthere.OverthereProcess;
 import com.xebialabs.overthere.nio.process.Processes;
 
 import static com.xebialabs.j12012.ConnectionTester.isReachable;
 import static com.xebialabs.overthere.nio.process.Processes.execute;
+import static com.xebialabs.overthere.nio.process.Processes.startProcess;
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isReadable;
@@ -51,12 +55,12 @@ public abstract class ScenarioTest {
             execute(glassfishPath.resolve("bin/asadmin"), "stop-domain");
         }
 
-//        Files.walkFileTree(glassfishPath, new DeleteDirVisitor());
-        Files.delete(targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP));
+        Files.walkFileTree(glassfishPath, new DeleteDirVisitor());
+        Files.deleteIfExists(targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP));
     }
 
     @Test(dependsOnMethods = "cleanup")
-    public void shouldCopyToRemote() throws IOException {
+    public void shouldCopyToRemote() throws IOException, InterruptedException {
         Path localPath = localFileSystem.getPath(GLASSFISH_ZIP);
         Path targetPath = targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP);
 
@@ -69,8 +73,19 @@ public abstract class ScenarioTest {
         assertThat("Glassfish dir should exist after unzip", Files.exists(glassfishPath));
 
         assertThat("GlassFish should not be started yet", !isReachable(getIp(), 4848));
-        execute(glassfishPath.resolve("bin/asadmin"), "start-domain");
+        OverthereProcess overthereProcess = startProcess(glassfishPath.resolve("glassfish/bin/startserv"));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(overthereProcess.getStderr()));
+        String line = null;
+        while ((line = bufferedReader.readLine()) != null) {
+            System.out.println(line);
+            if (line.contains("INFO: Successfully launched")) {
+                break;
+            }
+        }
+        // Give GlassFish admin console a bit of time to start.
+        Thread.sleep(5000);
         assertThat("GlassFish should be started", isReachable(getIp(), 4848));
+        overthereProcess.destroy();
     }
 
 }
