@@ -91,6 +91,7 @@ public abstract class Scenario {
         // Start GlassFish container
         assertThat("GlassFish should not be started yet", !Commons.isReachable(getIp(), 4848, "/"));
         overthereProcess = startProcess(targetGlassfishDirPath.resolve("glassfish/bin/startserv"));
+        dumpStream(overthereProcess.getStdout(), System.out);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(overthereProcess.getStderr()));
         String line;
         System.out.println("------------------------- Glassfish boot log -------------------------");
@@ -100,9 +101,26 @@ public abstract class Scenario {
                 break;
             }
         }
+        dumpStream(overthereProcess.getStderr(), System.err);
         System.out.println("----------------------------------------------------------------------");
 
         Commons.waitUntilReachable(getIp(), 4848, "/");
+    }
+    
+    private void dumpStream(final InputStream from, final OutputStream to) {
+        Thread dumper = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    int cInt = from.read();
+                    while(cInt != -1) {
+                        to.write(cInt);
+                        cInt = from.read();
+                    }
+                } catch(IOException ignore) { }
+            }
+        });
+        dumper.start();
+
     }
 
     @Test(dependsOnMethods = "startGlassfishContainer")
