@@ -25,6 +25,7 @@ dependencies {
   compile 'com.xebialabs.overthere:nio-overthere:1.0.0-SNAPSHOT'
   compile 'org.apache.httpcomponents:httpclient:4.2.1'
   compile 'org.apache.httpcomponents:httpcore:4.2.1'
+  compile 'org.slf4j:slf4j-api:1.6.3'
   runtime 'com.jcraft:jzlib:1.0.7'
   runtime 'org.bouncycastle:bcprov-jdk16:1.45'
 

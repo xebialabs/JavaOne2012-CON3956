@@ -6,6 +6,8 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 
@@ -17,11 +19,13 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Commons {
 
-    public static boolean isReachable(String ip, int port, String resource) throws IOException {
-        int statusCode = getStatusCode(URI.create("http://" + ip + ":" + port + resource));
+    public static boolean isReachable(URI uri) throws IOException {
+        int statusCode = getStatusCode(uri);
         return statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED;
     }
 
@@ -31,6 +35,7 @@ public class Commons {
         try {
             HttpResponse execute = httpClient.execute(httpGet);
             int statusCode = execute.getStatusLine().getStatusCode();
+            logger.info("URI <{}> --> {}", uri, statusCode);
             return statusCode;
         } catch (HttpHostConnectException hhce) {
             return 500;
@@ -74,11 +79,28 @@ public class Commons {
         });
     }
 
-    public static void waitUntilReachable(final String ip, final int i, final String resource) throws InterruptedException, IOException {
-        while (!isReachable(ip, i, resource)) {
+    public static void waitUntilReachable(URI uri) throws InterruptedException, IOException {
+        logger.info("Waiting until <{}> is reachable", uri);
+        while (!isReachable(uri)) {
             Thread.sleep(1000);
         }
     }
 
+    public static void dumpStream(final InputStream from, final OutputStream to) {
+        Thread dumper = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    int cInt = from.read();
+                    while(cInt != -1) {
+                        to.write(cInt);
+                        cInt = from.read();
+                    }
+                } catch(IOException ignore) { }
+            }
+        });
+        dumper.start();
+    }
 
+
+    private static final Logger logger = LoggerFactory.getLogger(Commons.class);
 }
