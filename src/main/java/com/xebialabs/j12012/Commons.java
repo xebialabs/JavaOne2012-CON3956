@@ -1,13 +1,17 @@
 package com.xebialabs.j12012;
 
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Desktop;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicSplitPaneUI;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;

@@ -9,7 +9,6 @@ import org.testng.annotations.Test;
 import com.google.common.collect.Maps;
 
 import com.xebialabs.j12012.OverthereScenario;
-import com.xebialabs.j12012.Scenario;
 
 public class Demo02_Local extends OverthereScenario {
     @Override

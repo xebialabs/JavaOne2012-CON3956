@@ -6,14 +6,9 @@ import java.nio.file.FileSystems;
 import java.util.Collections;
 import java.util.Map;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.xebialabs.j12012.OverthereScenarioWithOvercast;
-import com.xebialabs.j12012.Scenario;
-import com.xebialabs.overcast.CloudHost;
-import com.xebialabs.overcast.CloudHostFactory;
 
 public class Demo03_SshSftp extends OverthereScenarioWithOvercast {
     @Override

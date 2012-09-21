@@ -2,16 +2,21 @@ package com.xebialabs.j12012;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.*;
-import org.testng.annotations.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
-import com.google.common.io.Closeables;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import com.xebialabs.overthere.OverthereProcess;
 
-import static com.xebialabs.j12012.Commons.isReachable;
 import static com.xebialabs.overthere.nio.process.Processes.execute;
 import static com.xebialabs.overthere.nio.process.Processes.startProcess;
 import static java.nio.file.Files.copy;
