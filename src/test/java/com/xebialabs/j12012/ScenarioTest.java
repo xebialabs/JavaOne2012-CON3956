@@ -48,7 +48,7 @@ public abstract class ScenarioTest {
 
     @BeforeMethod(dependsOnMethods = "setup")
     public void cleanup() throws IOException {
-        if (isReachable(getIp(), 4848)) {
+        if (Commons.isReachable(getIp(), 4848)) {
             execute(targetGlassfishDirPath.resolve("bin/asadmin"), "stop-domain");
         }
 
@@ -78,16 +78,18 @@ public abstract class ScenarioTest {
         assertThat("Glassfish dir should exist after unzip", Files.exists(targetGlassfishDirPath));
 
         // Start GlassFish container
-        assertThat("GlassFish should not be started yet", !isReachable(getIp(), 4848));
+        assertThat("GlassFish should not be started yet", !Commons.isReachable(getIp(), 4848));
         OverthereProcess overthereProcess = startProcess(targetGlassfishDirPath.resolve("glassfish/bin/startserv"));
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(overthereProcess.getStderr()));
         String line;
+        System.out.println("------------------------- Glassfish boot log -------------------------");
         while ((line = bufferedReader.readLine()) != null) {
             System.out.println(line);
             if (line.contains("INFO: Successfully launched")) {
                 break;
             }
         }
+        System.out.println("----------------------------------------------------------------------");
 
         Commons.waitUntilReachable(getIp(), 4848);
 
@@ -96,9 +98,13 @@ public abstract class ScenarioTest {
         try {
             Commons.waitUntilButtonClicked();
         } finally {
+            // Kill GlassFish process.
             overthereProcess.destroy();
         }
 
+
+        Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
+        Files.deleteIfExists(targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP));
     }
 
 }
