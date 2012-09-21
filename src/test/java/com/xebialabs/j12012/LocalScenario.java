@@ -3,6 +3,9 @@ package com.xebialabs.j12012;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystems;
+
+import org.testng.annotations.Test;
+
 import com.google.common.collect.Maps;
 
 public class LocalScenario extends ScenarioTest {
@@ -17,4 +20,8 @@ public class LocalScenario extends ScenarioTest {
     protected String getIp() {
         return "127.0.0.1";
     }
+    
+    @Test
+    public void neededForTestNGPluginForEclipseToRecognizeThisClassAsATest() { }
+
 }
