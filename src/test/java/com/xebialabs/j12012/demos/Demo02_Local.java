@@ -1,4 +1,4 @@
-package com.xebialabs.j12012;
+package com.xebialabs.j12012.demos;
 
 import java.io.IOException;
 import java.net.URI;
@@ -8,7 +8,10 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Maps;
 
-public class LocalScenario extends ScenarioTest {
+import com.xebialabs.j12012.OverthereScenario;
+import com.xebialabs.j12012.Scenario;
+
+public class Demo02_Local extends OverthereScenario {
     @Override
     protected void initTarget() throws IOException {
         targetFileSystem = FileSystems.newFileSystem(URI.create("local:///"), Maps.<String, Object>newHashMap());

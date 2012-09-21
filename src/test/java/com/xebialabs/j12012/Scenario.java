@@ -3,6 +3,7 @@ package com.xebialabs.j12012;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.file.*;
 import org.testng.annotations.*;
 
@@ -14,9 +15,10 @@ import static com.xebialabs.j12012.Commons.isReachable;
 import static com.xebialabs.overthere.nio.process.Processes.execute;
 import static com.xebialabs.overthere.nio.process.Processes.startProcess;
 import static java.nio.file.Files.copy;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class ScenarioTest {
+public abstract class Scenario {
     public static final String GLASSFISH_ZIP = "glassfish-3.1.2.2.zip";
     public static final String PETCLINIC_EAR = "PetClinic-1.0.ear";
     public static final String GLASSFISH_DIR = "glassfish3";
@@ -25,14 +27,15 @@ public abstract class ScenarioTest {
     protected FileSystem targetFileSystem;
     protected String targetCopyPathName;
     protected String unzipPathName;
-    private Path unzipPath;
-    private Path targetGlassfishDirPath;
+    protected Path unzipPath;
+    protected Path targetGlassfishDirPath;
     private Path localGlassfishZipPath;
     private Path localPetClinicEarPath;
-    private Path targetGlassfishZipPath;
+    protected Path targetGlassfishZipPath;
     private Path targetPetClinicDeployPath;
+    private OverthereProcess overthereProcess;
 
-    @BeforeMethod
+    @BeforeClass
     public void setup() throws IOException {
         initTarget();
         localFileSystem = FileSystems.getDefault();
@@ -46,19 +49,16 @@ public abstract class ScenarioTest {
         targetPetClinicDeployPath = targetGlassfishDirPath.resolve("glassfish/domains/domain1/autodeploy").resolve(PETCLINIC_EAR);
     }
 
-    @BeforeMethod(dependsOnMethods = "setup")
+    @BeforeClass(dependsOnMethods = "setup")
     public void cleanup() throws IOException {
         if (Commons.isReachable(getIp(), 4848, "/")) {
             execute(targetGlassfishDirPath.resolve("bin/asadmin"), "stop-domain");
         }
 
-        Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
+        if (Files.exists(targetGlassfishDirPath)) {
+            Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
+        }
         Files.deleteIfExists(targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP));
-    }
-
-    @AfterMethod
-    public void closeAll() {
-        Closeables.closeQuietly(targetFileSystem);
     }
 
     protected abstract void initTarget() throws IOException;
@@ -66,20 +66,26 @@ public abstract class ScenarioTest {
     protected abstract String getIp();
 
     @Test
-    public void shouldCopyToRemote() throws IOException, InterruptedException {
+    public void copyGlassfishZip() throws IOException {
         // Copy GlassFish zip to remote machine.
         assertThat("Glassfish should not exist before copy", !Files.exists(targetGlassfishZipPath));
         copy(localGlassfishZipPath, targetGlassfishZipPath, StandardCopyOption.REPLACE_EXISTING);
         assertThat("Glassfish should exist after copy", Files.exists(targetGlassfishZipPath));
+    }
 
+    @Test(dependsOnMethods = "copyGlassfishZip")
+    public void unzipGlassfishZip() throws IOException, InterruptedException {
         // Unzip GlassFish zip on remote machine
         assertThat("Glassfish dir should not exist before unzip", !Files.exists(targetGlassfishDirPath));
         execute(unzipPath, targetGlassfishZipPath.toString(), "-d", targetGlassfishDirPath.getParent().toString());
         assertThat("Glassfish dir should exist after unzip", Files.exists(targetGlassfishDirPath));
+    }
 
+    @Test(dependsOnMethods = "unzipGlassfishZip")
+    public void startGlassfishContainer() throws IOException, InterruptedException {
         // Start GlassFish container
         assertThat("GlassFish should not be started yet", !Commons.isReachable(getIp(), 4848, "/"));
-        OverthereProcess overthereProcess = startProcess(targetGlassfishDirPath.resolve("glassfish/bin/startserv"));
+        overthereProcess = startProcess(targetGlassfishDirPath.resolve("glassfish/bin/startserv"));
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(overthereProcess.getStderr()));
         String line;
         System.out.println("------------------------- Glassfish boot log -------------------------");
@@ -92,19 +98,32 @@ public abstract class ScenarioTest {
         System.out.println("----------------------------------------------------------------------");
 
         Commons.waitUntilReachable(getIp(), 4848, "/");
-
-        // Deploy PetClinic-1.0.ear on GlassFish.
-        copy(localPetClinicEarPath, targetPetClinicDeployPath, StandardCopyOption.REPLACE_EXISTING);
-        try {
-            Commons.waitUntilButtonClicked();
-        } finally {
-            // Kill GlassFish process.
-            overthereProcess.destroy();
-        }
-
-
-        Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
-        Files.deleteIfExists(targetFileSystem.getPath(targetCopyPathName, GLASSFISH_ZIP));
     }
 
+    @Test(dependsOnMethods = "startGlassfishContainer")
+    public void deployPetClinicEar() throws IOException, InterruptedException {
+        // Deploy PetClinic-1.0.ear on GlassFish.
+        assertThat(Commons.getStatusCode(URI.create("http://localhost:8080/petclinic")), equalTo(404));
+        copy(localPetClinicEarPath, targetPetClinicDeployPath, StandardCopyOption.REPLACE_EXISTING);
+        Commons.waitUntilReachable(getIp(), 8080, "/petclinic");
+        assertThat(Commons.getStatusCode(URI.create("http://localhost:8080/petclinic")), equalTo(200));
+    }
+
+    @Test(dependsOnMethods = "deployPetClinicEar")
+    public void waitForButton() throws IOException, InterruptedException {
+        Commons.waitUntilButtonClicked();
+    }
+
+    @Test(dependsOnMethods = "waitForButton")
+    public void stopGlassfishContainer() {
+        // Kill GlassFish process.
+        overthereProcess.destroy();
+    }
+
+    @Test(dependsOnMethods = "stopGlassfishContainer")
+    public void removeCopiedFiles() throws IOException {
+        Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
+        Files.deleteIfExists(targetGlassfishZipPath);
+    }
 }
+

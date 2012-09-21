@@ -1,4 +1,4 @@
-package com.xebialabs.j12012;
+package com.xebialabs.j12012.demos;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,34 +10,20 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.xebialabs.j12012.OverthereScenario;
+import com.xebialabs.j12012.OverthereScenarioWithOvercast;
+import com.xebialabs.j12012.Scenario;
 import com.xebialabs.overcast.CloudHost;
 import com.xebialabs.overcast.CloudHostFactory;
 
-public class CifsTelnetScenario extends ScenarioTest {
-    private CloudHost host;
-
-    @BeforeClass
-    public void setupHost() {
-        host = CloudHostFactory.getCloudHost("glassfish_cifs");
-        host.setup();
-    }
-
-    @AfterClass
-    public void teardownHost() {
-        host.teardown();
-    }
-
+public class Demo05_CifsTelnet extends OverthereScenarioWithOvercast {
     @Override
     protected void initTarget() throws IOException {
+        setupHost("glassfish_cifs");
         final Map<String, String> map = Collections.singletonMap("password", "xeb1aLabs");
         targetFileSystem = FileSystems.newFileSystem(URI.create("cifs+telnet://Administrator@" + host.getHostName() + "/"), map);
         targetCopyPathName = "C:\\temp";
         unzipPathName = "C:\\temp\\unzip.exe";
-    }
-
-    @Override
-    protected String getIp() {
-        return host.getHostName();
     }
 
     @Test
