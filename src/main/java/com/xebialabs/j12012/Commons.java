@@ -14,15 +14,20 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 public class Commons {
 
-    public static boolean isReachable(String ip, int port) throws IOException {
+    public static boolean isReachable(String ip, int port, String resource) throws IOException {
+        int statusCode = getStatusCode(URI.create("http://" + ip + ":" + port + resource));
+        return statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED;
+    }
+
+    public static int getStatusCode(URI uri) throws IOException {
         DefaultHttpClient httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(URI.create("http://" + ip + ":" + port));
+        HttpGet httpGet = new HttpGet(uri);
         try {
             HttpResponse execute = httpClient.execute(httpGet);
             int statusCode = execute.getStatusLine().getStatusCode();
-            return statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED;
+            return statusCode;
         } catch (HttpHostConnectException hhce) {
-            return false;
+            return 500;
         }
     }
 
@@ -43,8 +48,8 @@ public class Commons {
         countDownLatch.await();
     }
 
-    public static void waitUntilReachable(final String ip, final int i) throws InterruptedException, IOException {
-        while (!isReachable(ip, i)) {
+    public static void waitUntilReachable(final String ip, final int i, final String resource) throws InterruptedException, IOException {
+        while (!isReachable(ip, i, resource)) {
             Thread.sleep(1000);
         }
     }
