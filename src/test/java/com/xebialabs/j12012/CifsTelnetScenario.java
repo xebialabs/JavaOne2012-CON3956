@@ -30,7 +30,7 @@ public class CifsTelnetScenario extends ScenarioTest {
     @Override
     protected void initTarget() throws IOException {
         final Map<String, String> map = Collections.singletonMap("password", "xeb1aLabs");
-        targetFileSystem = FileSystems.newFileSystem(URI.create("cifs://Administrator@" + host.getHostName() + "/?os=WINDOWS&connectionType=TELNET"), map);
+        targetFileSystem = FileSystems.newFileSystem(URI.create("cifs+telnet://Administrator@" + host.getHostName() + "/"), map);
         targetCopyPathName = "C:\\temp";
         unzipPathName = "C:\\temp\\unzip.exe";
     }
