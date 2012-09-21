@@ -103,10 +103,10 @@ public abstract class Scenario {
     @Test(dependsOnMethods = "startGlassfishContainer")
     public void deployPetClinicEar() throws IOException, InterruptedException {
         // Deploy PetClinic-1.0.ear on GlassFish.
-        assertThat(Commons.getStatusCode(URI.create("http://localhost:8080/petclinic")), equalTo(404));
+        assertThat(Commons.getStatusCode(URI.create("http://" + getIp() + ":8080/petclinic")), equalTo(404));
         copy(localPetClinicEarPath, targetPetClinicDeployPath, StandardCopyOption.REPLACE_EXISTING);
         Commons.waitUntilReachable(getIp(), 8080, "/petclinic");
-        assertThat(Commons.getStatusCode(URI.create("http://localhost:8080/petclinic")), equalTo(200));
+        assertThat(Commons.getStatusCode(URI.create("http://" + getIp() + ":8080/petclinic")), equalTo(200));
     }
 
     @Test(dependsOnMethods = "deployPetClinicEar")
@@ -115,9 +115,10 @@ public abstract class Scenario {
     }
 
     @Test(dependsOnMethods = "waitForButton")
-    public void stopGlassfishContainer() {
-        // Kill GlassFish process.
-        overthereProcess.destroy();
+    public void stopGlassfishContainer() throws InterruptedException {
+        // Stop GlassFish process.
+        execute(targetGlassfishDirPath.resolve("bin/asadmin"), "stop-domain");
+        overthereProcess.waitFor();
     }
 
     @Test(dependsOnMethods = "stopGlassfishContainer")
