@@ -111,7 +111,7 @@ public abstract class Scenario {
 
     @Test(dependsOnMethods = "deployPetClinicEar")
     public void waitForButton() throws IOException, InterruptedException {
-        Commons.waitUntilButtonClicked();
+        Commons.waitUntilButtonClicked("http://" + getIp() + ":8080/petclinic");
     }
 
     @Test(dependsOnMethods = "waitForButton")
@@ -121,7 +121,9 @@ public abstract class Scenario {
     }
 
     @Test(dependsOnMethods = "stopGlassfishContainer")
-    public void removeCopiedFiles() throws IOException {
+    public void removeCopiedFiles() throws IOException, InterruptedException {
+        // Clean up, but first wait a bit for the file descriptors to clear.
+        Thread.sleep(2000);
         Files.walkFileTree(targetGlassfishDirPath, new DeleteDirVisitor());
         Files.deleteIfExists(targetGlassfishZipPath);
     }
