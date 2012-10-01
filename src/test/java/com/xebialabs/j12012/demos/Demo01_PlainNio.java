@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 
+import org.testng.annotations.Test;
+
 import com.xebialabs.j12012.Commons;
 import com.xebialabs.j12012.Scenario;
 
@@ -85,4 +87,8 @@ public class Demo01_PlainNio extends Scenario {
 
         process.waitFor();
     }
+
+    @Test
+    public void neededForTestNGPluginForEclipseToRecognizeThisClassAsATest() { }
+
 }
