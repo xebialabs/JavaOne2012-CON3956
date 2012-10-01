@@ -5,10 +5,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.ArrayList;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.Lists;
+
+import com.xebialabs.overthere.OverthereFile;
 import com.xebialabs.overthere.OverthereProcess;
+import com.xebialabs.overthere.nio.file.OverthereFileSystem;
+import com.xebialabs.overthere.nio.file.OvertherePath;
 import com.xebialabs.overthere.nio.process.Processes;
 
 import static com.xebialabs.j12012.Commons.dumpStream;
@@ -136,7 +142,13 @@ public abstract class Scenario {
         out.println("*** Cleaning up copied files");
         // Clean up, but first wait a bit for the file descriptors to clear.
         Thread.sleep(2000);
-        Files.walkFileTree(targetGlassFishDirPath, new DeleteDirVisitor());
+        ArrayList<String> rmRfConnections = Lists.newArrayList("SshScpConnection", "SshSudoConnection", "SshInteractiveSudoConnection");
+        if (targetGlassFishDirPath instanceof OvertherePath && rmRfConnections.contains(((OverthereFileSystem) targetGlassFishDirPath.getFileSystem()).getConnection().getClass().getSimpleName())) {
+            System.out.println("For SSH/SCP fallback to an rm -rf process execute...");
+            Processes.execute(targetFileSystem.getPath("rm"), "-rf", targetGlassFishDirPath.toString());
+        } else {
+            Files.walkFileTree(targetGlassFishDirPath, new DeleteDirVisitor());
+        }
         Files.deleteIfExists(targetGlassFishZipPath);
     }
 
