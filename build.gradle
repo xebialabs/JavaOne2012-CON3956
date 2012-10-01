@@ -4,10 +4,17 @@ group = "com.xebialabs.overthere"
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
+apply plugin: 'maven'
 
 repositories {
-  mavenLocal()
   mavenCentral()
+  maven {
+    url 'http://download.java.net/maven/2/'
+  }
+  maven {
+    url 'https://oss.sonatype.org/content/repositories/releases'
+  }
+  mavenLocal()
 }
 
 sourceCompatibility = 1.7
