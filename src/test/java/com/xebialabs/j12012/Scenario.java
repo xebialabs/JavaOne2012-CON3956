@@ -4,14 +4,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Lists;
 
-import com.xebialabs.overthere.OverthereFile;
 import com.xebialabs.overthere.OverthereProcess;
 import com.xebialabs.overthere.nio.file.OverthereFileSystem;
 import com.xebialabs.overthere.nio.file.OvertherePath;
